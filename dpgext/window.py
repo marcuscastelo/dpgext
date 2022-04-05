@@ -1,8 +1,8 @@
 from collections import namedtuple
 from typing import Union
 
-from dpgext.utils.sig import metsig
-from dpgext.utils.logger import LOGGER
+from utils.sig import metsig
+from utils.logger import LOGGER
 import dearpygui.dearpygui as dpg
 
 class Container:

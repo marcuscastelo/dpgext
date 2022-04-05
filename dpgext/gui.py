@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from dpgext.window import Window
-from dpgext.utils.logger import LOGGER
+from utils.logger import LOGGER
 
 class Gui:
     _instance = None # Singleton instance    

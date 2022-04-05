@@ -1,7 +1,7 @@
 from typing import Any, Callable, Dict, Union
-from dpgext.utils.logger import LOGGER
+from utils.logger import LOGGER
 import dpgext.gui as gui
-from dpgext.utils.sig import metsig
+from utils.sig import metsig
 
 import dearpygui.dearpygui as dpg
 
