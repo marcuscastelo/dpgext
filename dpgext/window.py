@@ -49,6 +49,9 @@ class Container:
         else:
             print("Container not added, cannot clear")
 
+    def update(self):
+        pass
+
     def __enter__(self):
         self._add_if_needed()
         dpg.push_container_stack(self.id)
