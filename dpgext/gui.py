@@ -79,9 +79,13 @@ class Gui:
                 dpg.add_menu_item(label="Imgui Demo", callback=dpg.show_imgui_demo)
                 dpg.add_menu_item(label="Implot Demo", callback=dpg.show_implot_demo)
                 dpg.add_menu_item(label="Item Debug", callback=dpg.show_item_debug)
-
-
             pass
+
+    def _on_started(self):
+        pass
+
+    def _on_exiting(self):
+        pass
 
     def run(self):
         self._setup()
@@ -90,9 +94,12 @@ class Gui:
         self._describe_windows()
         self._describe_menu()
 
+        self._on_started()
+
         while dpg.is_dearpygui_running() and self._running:
             self._tick()
             dpg.render_dearpygui_frame()
 
         self._running = False
+        self._on_exiting()
         dpg.destroy_context()
