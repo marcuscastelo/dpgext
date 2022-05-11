@@ -1,5 +1,5 @@
 from typing import Any, Callable, Dict, Union
-from dpgext.elements.element import Element
+from dpgext.elements.element import Element, ElementParams
 from dpgext.elements.updatable_element import UpdatableElement
 from utils.logger import LOGGER
 import dpgext.gui as gui
@@ -7,21 +7,31 @@ from utils.sig import metsig
 
 import dearpygui.dearpygui as dpg
 
-class Button(Element):
+class ButtonParams(ElementParams):
+    @metsig(dpg.add_button)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class Button(Element[ButtonParams]):
     def __init__(self, id: Union[str, int] = 0):
         super().__init__(id)
 
     @metsig(dpg.add_button)
-    def _add(self, *args, **kwargs) -> int:
-        callback = kwargs.get('callback', None)
+    def _add(self, params: ButtonParams) -> int:
+        callback = params.kwargs.get('callback', None)
         if callback is None:
             LOGGER.log_warning("No callback function specified for button")
             callback = lambda: None
-        kwargs['callback'] = callback
+        params.kwargs['callback'] = callback
 
-        return dpg.add_button(*args, **kwargs, tag=self._tag)
+        return dpg.add_button(*params.args, **params.kwargs, tag=self._tag)
 
-class CheckBox(UpdatableElement):
+class CheckboxParams(ElementParams):
+    @metsig(dpg.add_checkbox)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class CheckBox(UpdatableElement[CheckboxParams]):
     def __init__(self, object: Any, attribute: str, id: Union[str, int] = 0):
         super().__init__(object, attribute, id=id)
         self.default_value: bool = getattr(self.object, self.attribute)
@@ -31,58 +41,84 @@ class CheckBox(UpdatableElement):
             
         assert self.default_value in [True, False]
 
-    def _set_value(self, _):
+    def _set_value(self, _, _value: bool):
         old_value = getattr(self.object, self.attribute)
         setattr(self.object, self.attribute, not old_value)
 
     @metsig(dpg.add_checkbox)
-    def _add(self, *args, **kwargs) -> int:
-        return dpg.add_checkbox(default_value=self.default_value, *args, **kwargs, tag=self.tag)
+    def _add(self, params: CheckboxParams) -> int:
+        return dpg.add_checkbox(default_value=self.default_value, *params.args, **params.kwargs, tag=self.tag)
 
     def update(self, *args, **kwargs):
         dpg.set_value(item=self.tag, value=getattr(self.object, self.attribute))
 
     def _reconfigure(self):
         pass
-# TODO: split in IntSlider and FloatSlider
-class Slider(UpdatableElement):
+
+class SliderFloatParams(ElementParams):
+    @metsig(dpg.add_slider_float)
+    def _add(self, *args, **kwargs) -> int:
+        return dpg.add_slider(*args, **kwargs, tag=self._tag)
+
+class SliderFloat(UpdatableElement[SliderFloatParams]):
     def __init__(self, object: Any, attribute: str, id: Union[str, int] = 0):
-        super().__init__(object, attribute, id)
-        self.attribute_type = type(getattr(self.object, self.attribute))
-        
-        constructors = {
-            float: dpg.add_slider_float,
-            int: dpg.add_slider_int,
-        }
+        super().__init__(object, attribute, id=id)
+        self.default_value: float = getattr(self.object, self.attribute)
 
-        if self.attribute_type not in constructors:
-            LOGGER.log_error(f"Unsupported attribute type {self.attribute_type=}")
-            raise NotImplementedError(f"Unsupported attribute type {self.attribute_type=}")
+        if self.default_value is None:
+            self.default_value = 0.0
 
-        self.constructor = constructors.get(self.attribute_type)
-
-    def _set_value(self, _ = None, value = None) -> None:
-        value = dpg.get_value(item=self.tag)
+    def _set_value(self, _, value: float):
         setattr(self.object, self.attribute, value)
 
     @metsig(dpg.add_slider_float)
-    def _add(self, *args, **kwargs) -> int:
-        if kwargs.get("default_value", None) is None:
-            kwargs["default_value"] = getattr(self.object, self.attribute)
-
-        return self.constructor(*args, **kwargs, tag=self.tag)
+    def _add(self, params: SliderFloatParams) -> int:
+        #TODO: change default value to self.default_value if it is None
+        return dpg.add_slider_float(default_value=self.default_value, *params.args, **params.kwargs, tag=self.tag)
 
     def _reconfigure(self):
-        # TODO: implement
         pass
 
-class Text(Element):
-    def _add(self, *args, **kwargs) -> int:
+
+class SliderIntParams(ElementParams):
+    @metsig(dpg.add_slider_int)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class SliderInt(UpdatableElement[SliderIntParams]):
+    def __init__(self, object: Any, attribute: str, id: Union[str, int] = 0):
+        super().__init__(object, attribute, id=id)
+        self.default_value: int = getattr(self.object, self.attribute)
+
+        if self.default_value is None:
+            self.default_value = 0
+
+    def _set_value(self, _, value: int):
+        setattr(self.object, self.attribute, value)
+
+    @metsig(dpg.add_slider_int)
+    def _add(self, params: SliderIntParams) -> int:
+        #TODO: change default value to self.default_value if it is None
+        return dpg.add_slider_int(default_value=self.default_value, *params.args, **params.kwargs, tag=self.tag)
+
+class TextParams(ElementParams):
+    @metsig(dpg.add_text)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class Text(Element[TextParams]):
+    @metsig(dpg.add_text)
+    def _add(self, params: TextParams) -> int:
         # TODO: warn_filter
         # kwargs['default_value'] = self.default_text
-        return dpg.add_text(*args, **kwargs, tag=self.tag)
+        return dpg.add_text(*params.args, **params.kwargs, tag=self.tag)
 
-class InputText(UpdatableElement):
+class InputTextParams(ElementParams):
+    @metsig(dpg.add_input_text)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class InputText(UpdatableElement[InputTextParams]):
     def __init__(self, object: Any, attribute: str, id: Union[str, int] = 0):
         super().__init__(object, attribute, id=id)
         self.default_value: str = getattr(self.object, self.attribute)
@@ -100,17 +136,21 @@ class InputText(UpdatableElement):
         pass
 
     @metsig(dpg.add_input_text)
-    def _add(self, *args, **kwargs) -> int:
-        kwargs["default_value"] = self.default_value
-        return dpg.add_input_text(id=self.tag, *args, **kwargs, tag=self.tag)
+    def _add(self, params: InputTextParams) -> int:
+        params.kwargs["default_value"] = self.default_value
+        return dpg.add_input_text(id=self.tag, *params.args, **params.kwargs, tag=self.tag)
         
     def update(self, *args, **kwargs):
         super().update(*args, **kwargs)
         if self.tag is not None:
             dpg.set_value(item=self.tag, value=getattr(self.object, self.attribute))
 
+class ComboParams(ElementParams):
+    @metsig(dpg.add_combo)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-class ComboBox(UpdatableElement):
+class Combo(UpdatableElement[ComboParams]):
     def __init__(self, object: Any, attribute: str, items: list, id: Union[str, int] = 0):
         super().__init__(object, attribute, id)
         self.default_value: str = getattr(self.object, self.attribute)
@@ -141,12 +181,12 @@ class ComboBox(UpdatableElement):
         return kwargs
 
     @metsig(dpg.add_combo)
-    def _add(self, *args, **kwargs) -> int:
-        kwargs = self._warn_filter_kwargs(**kwargs) #TODO: propagate to other classes
-        kwargs["default_value"] = self.default_value
-        kwargs["items"] = self.items
+    def _add(self, params: ComboParams) -> int:
+        params.kwargs = self._warn_filter_kwargs(**params.kwargs) #TODO: propagate to other classes
+        params.kwargs["default_value"] = self.default_value
+        params.kwargs["items"] = self.items
 
-        return dpg.add_combo(*args, **kwargs, tag=self.tag)
+        return dpg.add_combo(*params.args, **params.kwargs, tag=self.tag)
 
     def _reconfigure(self):
         super()._reconfigure()

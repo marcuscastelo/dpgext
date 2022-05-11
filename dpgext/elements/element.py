@@ -1,24 +1,25 @@
-import abc
-from typing import TypeVar, Union
+from abc import ABCMeta, abstractmethod
+from typing import Any, Callable, Generic, Type, TypeVar, Union, NamedTuple
+from typing_extensions import Self
 from utils.logger import LOGGER
 
 import dearpygui.dearpygui as dpg
 from utils.sig import metsig
 
-class ElementParameters:
-    @metsig(dpg.add_button)
+
+class ElementParams():
     def __init__(self, *args, **kwargs):
+        '''
+            In subclass, please use super().__init__(*args, **kwargs) to call the parent class's __init__
+            also, use @metsig(dpg.add_*) to copy the signature of the dpg.add_* function
+        '''
         self.args = args
         self.kwargs = kwargs
 
-T = TypeVar('T')
-class Element(metaclass=abc.ABCMeta):
+T = TypeVar('T', bound=ElementParams)
+class Element(Generic[T], metaclass=ABCMeta):
     def __init__(self, tag: Union[str, int] = 0):
         self._tag = tag
-    
-    # Getters and setters 
-    # (default is just plain getters and setters, 
-    # but can be overridden)
 
     @property
     def tag(self):
@@ -32,11 +33,11 @@ class Element(metaclass=abc.ABCMeta):
     def value(self):
         return dpg.get_value(self.tag)
 
-    @metsig(T)
-    def add(self, *args, **kwargs):
-        self.tag = self._add(*args, **kwargs)
-
-    @abc.abstractmethod
-    @metsig(T)
-    def _add(self, *args, **kwargs) -> int:
+    @abstractmethod
+    def _add(self, params: T = None) -> int:
         pass
+
+    def add(self, params: T = None) -> int:
+        if params is None: 
+            params = ElementParams()
+        self.tag = self._add(params)

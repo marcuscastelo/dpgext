@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Dict, Union
-from dpgext.elements.element import Element
+from dpgext.elements.element import Element, T, ElementParams
 from utils.logger import LOGGER
 
 import dearpygui.dearpygui as dpg
@@ -19,7 +19,7 @@ def _combine_callbacks(*callbacks: Callable) -> Callable:
                     LOGGER.log_error(f"{callback=} is not callable")
         return callback
 
-class UpdatableElement(Element, metaclass=ABCMeta):
+class UpdatableElement(Element[T], metaclass=ABCMeta):
     updatable_elements_registry: Dict[Union[str, int], 'UpdatableElement'] = {}
     def __init__(self, object: Any, attribute: str, id: Union[str, int] = None):
         super().__init__(id)
@@ -46,21 +46,25 @@ class UpdatableElement(Element, metaclass=ABCMeta):
         self.__class__.updatable_elements_registry[value] = self
 
     @abstractmethod
-    def _set_value(self, value): ...
+    def _set_value(self, tag: int, value): ...
 
-    def add(self, *args, **kwargs):
+    def add(self, params: T = None):
+        if params is None:
+            params = ElementParams()
+
         # Before adding, combine the user callback with the _set_value callback
-        user_callback = kwargs.get("callback", None)
+        user_callback = params.kwargs.get("callback", None)
         self.user_callback = user_callback
 
         callback = self._set_value
         if user_callback is not None:
             callback = _combine_callbacks(callback, user_callback)
 
-        kwargs["callback"] = callback
+        params.kwargs["callback"] = callback
+
 
         # Add the element
-        super().add(*args, **kwargs)    
+        super().add(params)
 
     @abstractmethod
     def _reconfigure(self): ...
