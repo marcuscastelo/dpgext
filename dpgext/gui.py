@@ -1,4 +1,5 @@
 import dearpygui.dearpygui as dpg
+from dpgext.elements import UpdatableElement
 
 from dpgext.window import Window
 from utils.logger import LOGGER
@@ -17,6 +18,10 @@ class Gui:
         pass
 
     def _tick(self):
+        for window in self.windows.values():
+            window.update()
+            
+        UpdatableElement.update_all()
         pass
 
     def _setup(self):

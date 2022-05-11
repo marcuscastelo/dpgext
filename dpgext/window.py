@@ -89,8 +89,7 @@ class Window(Container):
         return dpg.add_window(id=self.id, *self.args, **self.kwargs)
 
     def update(self):
-        if type(self) is Window:
-            raise NotImplementedError("Window is an abstract class")
+        pass
 
 class ChildWindow(Container):
     @metsig(dpg.add_child_window)

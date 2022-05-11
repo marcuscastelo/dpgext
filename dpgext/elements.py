@@ -104,8 +104,6 @@ class UpdatableElement(Element):
             raise NotImplementedError("_reconfigure() not implemented, UpdatableElement is an abstract class")
 
     def update(self, *args, **kwargs):
-        assert gui.is_running(), "Base GUI is not running"
-
         if self.pending_reconfigure:
             LOGGER.log_trace("Pending reconfigure, calling _reconfigure()", "GUI")
             self._reconfigure()
@@ -117,7 +115,6 @@ class UpdatableElement(Element):
     
     @classmethod
     def update_all(cls):
-        assert gui.is_running(), "Base GUI is not running"
         for element in cls.updatable_elements_registry.values():
             if element.id is not None and dpg.does_item_exist(element.id) and dpg.is_item_visible(element.id):
                 element.update()
@@ -286,7 +283,7 @@ class ComboBox(UpdatableElement):
     def construct(self, *args, **kwargs):
         super().construct(*args, **kwargs)
         kwargs = self._warn_filter_kwargs(**kwargs) #TODO: propagate to other classes
-
+        
         if self.user_callback is not None:
             callback = self._combine_callbacks(self._set_value, self.user_callback)
             kwargs["callback"] = callback
