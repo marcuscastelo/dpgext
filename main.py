@@ -4,7 +4,7 @@ class MainWindow(gui.Window):
     def describe(self):
         with self:
             el.Text("Hello World!")
-            el.Button().construct(label="Click Me!")
+            el.Button().add(label="Click Me!")
 
 class DemoGui(gui.Gui):
     def _init_windows(self):

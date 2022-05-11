@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-from dpgext.elements import UpdatableElement
+from dpgext.elements.updatable_element import UpdatableElement
 
 from dpgext.window import Window
 from utils.logger import LOGGER
