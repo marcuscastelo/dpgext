@@ -12,20 +12,16 @@ class Button(Element):
         super().__init__(id)
 
     @metsig(dpg.add_button)
-    def add(self, *args, **kwargs):
-        super().construct(*args, **kwargs)
+    def _add(self, *args, **kwargs) -> int:
         callback = kwargs.get('callback', None)
-
         if callback is None:
             LOGGER.log_warning("No callback function specified for button")
             callback = lambda: None
-        if self.id is not None:
-            self.id = dpg.add_button(id=self.id, *args, **kwargs)
-        else:
-            self.id = dpg.add_button(*args, **kwargs)
+        kwargs['callback'] = callback
 
+        return dpg.add_button(*args, **kwargs, tag=self._tag)
 
-class Checkbox(UpdatableElement):
+class CheckBox(UpdatableElement):
     def __init__(self, object: Any, attribute: str, id: Union[str, int] = 0):
         super().__init__(object, attribute, id=id)
         self.default_value: bool = getattr(self.object, self.attribute)
@@ -35,28 +31,20 @@ class Checkbox(UpdatableElement):
             
         assert self.default_value in [True, False]
 
-    def _toggle(self) -> None:
+    def _set_value(self, _):
         old_value = getattr(self.object, self.attribute)
         setattr(self.object, self.attribute, not old_value)
-        pass
-    
+
     @metsig(dpg.add_checkbox)
-    def add(self, *args, **kwargs):
-        super().add(*args, **kwargs) # Creates self.user_callback
-        callback = self._combine_callbacks(self._toggle, self.user_callback)
-        kwargs["callback"] = callback # Override callback with our own
-        
-        if self.tag is not None:
-            self.tag = dpg.add_checkbox(id=self.tag, default_value=self.default_value, *args, **kwargs)
-        else:
-            self.tag = dpg.add_checkbox(default_value=self.default_value, *args, **kwargs)
+    def _add(self, *args, **kwargs) -> int:
+        return dpg.add_checkbox(default_value=self.default_value, *args, **kwargs, tag=self.tag)
 
     def update(self, *args, **kwargs):
-        super().update(*args, **kwargs)
-        if self.tag is not None:
-            dpg.set_value(item=self.tag, value=getattr(self.object, self.attribute))
+        dpg.set_value(item=self.tag, value=getattr(self.object, self.attribute))
 
-
+    def _reconfigure(self):
+        pass
+# TODO: split in IntSlider and FloatSlider
 class Slider(UpdatableElement):
     def __init__(self, object: Any, attribute: str, id: Union[str, int] = 0):
         super().__init__(object, attribute, id)
@@ -78,45 +66,21 @@ class Slider(UpdatableElement):
         setattr(self.object, self.attribute, value)
 
     @metsig(dpg.add_slider_float)
-    def add(self, *args, **kwargs):
-        super().add(*args, **kwargs) # Creates self.user_callback
-        callback = self._combine_callbacks(self._set_value, self.user_callback)
-        kwargs["callback"] = callback # Override callback with our own
+    def _add(self, *args, **kwargs) -> int:
         if kwargs.get("default_value", None) is None:
             kwargs["default_value"] = getattr(self.object, self.attribute)
-        if self.tag is not None:
-            self.tag = self.constructor(id=self.tag, *args, **kwargs)
-        else:
-            self.tag = self.constructor(*args, **kwargs)
+
+        return self.constructor(*args, **kwargs, tag=self.tag)
+
+    def _reconfigure(self):
+        # TODO: implement
+        pass
 
 class Text(Element):
-    def __init__(self, id: Union[str, int] = 0):
-        super().__init__(id)
-
     def _add(self, *args, **kwargs) -> int:
         # TODO: warn_filter
         # kwargs['default_value'] = self.default_text
         return dpg.add_text(*args, **kwargs, tag=self.tag)
-
-# class LabeledSlider(Slider):
-#     def __init__(self, object: Any, attribute: str, label_text: str, label_same_line=True, id: Union[str, int] = 0):
-#         super().__init__(object, attribute, id)
-#         self.label_text = label_text
-#         self.label_same_line = label_same_line
-
-#     def _add_label_and_slider(self, *args, **kwargs):
-#         dpg.add_text(self.label_text)
-#         super().add(*args, **kwargs)
-
-#     @metsig(dpg.add_slider_float)
-#     def add(self, *args, **kwargs):
-#         if self.label_same_line:
-#             with dpg.group(horizontal=True):
-#                 self._add_label_and_slider(*args, **kwargs)
-#         else:
-#             self._add_label_and_slider(*args, **kwargs)
-
-#     # test = metsig(dpg.add_slider_float)(_construct)
 
 class InputText(UpdatableElement):
     def __init__(self, object: Any, attribute: str, id: Union[str, int] = 0):
@@ -131,19 +95,14 @@ class InputText(UpdatableElement):
         value = dpg.get_value(item=self.tag)
         setattr(self.object, self.attribute, value)
 
+    def _reconfigure(self):
+        # TODO: implement
+        pass
+
     @metsig(dpg.add_input_text)
-    def add(self, *args, **kwargs):
-        super().add(*args, **kwargs)
-
-        if self.user_callback is not None:
-            callback = self._combine_callbacks(self._set_value, self.user_callback)
-            kwargs["callback"] = callback
-
+    def _add(self, *args, **kwargs) -> int:
         kwargs["default_value"] = self.default_value
-        if self.tag is not None:
-            self.tag = dpg.add_input_text(id=self.tag, *args, **kwargs)
-        else:
-            self.tag = dpg.add_input_text(*args, **kwargs)
+        return dpg.add_input_text(id=self.tag, *args, **kwargs, tag=self.tag)
         
     def update(self, *args, **kwargs):
         super().update(*args, **kwargs)
