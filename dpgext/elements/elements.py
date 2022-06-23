@@ -57,8 +57,8 @@ class CheckBox(UpdatableElement[CheckboxParams]):
 
 class SliderFloatParams(ElementParams):
     @metsig(dpg.add_slider_float)
-    def _add(self, *args, **kwargs) -> int:
-        return dpg.add_slider(*args, **kwargs, tag=self._tag)
+    def __init__(self, *args, **kwargs) -> int:
+        super().__init__(*args, **kwargs)
 
 class SliderFloat(UpdatableElement[SliderFloatParams]):
     def __init__(self, object: Any, attribute: str, id: Union[str, int] = 0):
