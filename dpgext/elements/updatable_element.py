@@ -70,6 +70,8 @@ class UpdatableElement(Element[T], metaclass=ABCMeta):
     def _reconfigure(self): ...
 
     def update(self, *args, **kwargs):
+        dpg.set_value(self.tag, getattr(self.object, self.attribute))
+
         if self._pending_reconfigure:
             LOGGER.log_trace("Pending reconfigure, calling _reconfigure()", "GUI")
             self._reconfigure()
